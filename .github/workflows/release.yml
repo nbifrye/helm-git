@@ -131,7 +131,10 @@ jobs:
         env:
           HELM_GIT_SIGNING_PRIVATE_KEY: ${{ secrets.HELM_GIT_SIGNING_PRIVATE_KEY }}
         run: |
-          test -n "$HELM_GIT_SIGNING_PRIVATE_KEY"
+          # Users verify with signing-key.asc, so it must hold the key that signs the release.
+          fpr="$(printf '%s\n' "$HELM_GIT_SIGNING_PRIVATE_KEY" | gpg --batch --show-keys --with-colons | awk -F: '$1 == "fpr" { print $10; exit }')"
+          test -n "$fpr"
+          gpg --batch --show-keys --with-colons signing-key.asc | grep -q "^fpr:.*:${fpr}:$"
           printf '%s\n' "$HELM_GIT_SIGNING_PRIVATE_KEY" | gpg --batch --dearmor > "$RUNNER_TEMP/secring.gpg"
 
       - env:
