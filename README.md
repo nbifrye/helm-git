@@ -24,12 +24,13 @@ Use `helm` CLI to install this plugin with Helm v2 or v3:
 
 ### Helm v4
 
-Helm v4 verifies plugin signatures by default. Each release ships a signed tarball
+Helm v4 verifies plugin signatures by default. Each release of the
+[nbifrye/helm-git](https://github.com/nbifrye/helm-git) fork ships a signed tarball
 (`helm-git-<version>.tgz`) along with its provenance file (`.prov`).
 Save the public key to a keyring file, then install the tarball with it:
 
-    curl -fsSL https://raw.githubusercontent.com/aslafy-z/helm-git/master/signing-key.asc | gpg --dearmor > helm-git.gpg
-    helm plugin install --keyring helm-git.gpg https://github.com/aslafy-z/helm-git/releases/download/v1.5.2/helm-git-1.5.2.tgz
+    curl -fsSL https://raw.githubusercontent.com/nbifrye/helm-git/master/signing-key.asc | gpg --dearmor > helm-git.gpg
+    helm plugin install --keyring helm-git.gpg https://github.com/nbifrye/helm-git/releases/download/v1.5.2/helm-git-1.5.2.tgz
 
 The key is converted with `gpg --dearmor` because Helm versions before v4.3.0 only read
 binary keyrings. Helm v4 does not support `--version` for tarballs; the version is part of the URL.
