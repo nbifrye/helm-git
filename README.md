@@ -18,9 +18,20 @@ Compatibility: Helm v2.9+, v3, v4.0.5+
 
 ## Install
 
-Use `helm` CLI to install this plugin:
+Use `helm` CLI to install this plugin with Helm v2 or v3:
 
     helm plugin install https://github.com/aslafy-z/helm-git --version 1.5.2
+
+### Helm v4
+
+Helm v4 verifies plugin signatures by default. Install the signed tarball released by the
+[nbifrye/helm-git](https://github.com/nbifrye/helm-git) fork with its public key:
+
+    curl -fsSL https://raw.githubusercontent.com/nbifrye/helm-git/master/signing-key.asc | gpg --dearmor > helm-git.gpg
+    helm plugin install --keyring helm-git.gpg https://github.com/nbifrye/helm-git/releases/download/v1.5.2/helm-git-1.5.2.tgz
+
+The key is converted with `gpg --dearmor` because Helm versions before v4.3.0 only read
+binary keyrings.
 
 To use the plugin, you only need `git`. If you want to build the plugin from source, or you want to contribute
 to the plugin, please see [these instructions](.github/CONTRIBUTING.md).

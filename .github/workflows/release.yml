@@ -81,7 +81,16 @@ jobs:
 
       - run: npm ci
 
+      - uses: azure/setup-helm@v4
+        with:
+          version: '4.3.2'
+
       - env:
           GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
+          HELM_GIT_SIGNING_KEY: ${{ vars.HELM_GIT_SIGNING_KEY }}
+          HELM_GIT_SIGNING_KEYRING: ${{ runner.temp }}/signing-key.asc
+          HELM_GIT_SIGNING_PASSPHRASE: ${{ secrets.HELM_GIT_SIGNING_PASSPHRASE }}
+          HELM_GIT_SIGNING_PRIVATE_KEY: ${{ secrets.HELM_GIT_SIGNING_PRIVATE_KEY }}
         run: |
+          printf '%s\n' "$HELM_GIT_SIGNING_PRIVATE_KEY" > "$HELM_GIT_SIGNING_KEYRING"
           npm run release
