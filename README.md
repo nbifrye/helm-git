@@ -22,6 +22,15 @@ Use `helm` CLI to install this plugin:
 
     helm plugin install https://github.com/aslafy-z/helm-git --version 1.5.2
 
+With Helm v4, add `--verify=false`:
+
+    helm plugin install --verify=false https://github.com/aslafy-z/helm-git --version 1.5.2
+
+Helm v4 verifies plugin signatures by default, and only supports verification for
+tarballs that ship with a `.prov` file. Installing from a Git repository cannot be
+verified, so Helm v4 refuses it unless `--verify=false` is set. Helm v2 and v3 never
+verify plugins and do not know this flag.
+
 To use the plugin, you only need `git`. If you want to build the plugin from source, or you want to contribute
 to the plugin, please see [these instructions](.github/CONTRIBUTING.md).
 
