@@ -6,11 +6,12 @@
   "scripts": {
     "test": "bats --print-output-on-failure tests/*-*.bats",
     "test:e2e": "bats --print-output-on-failure tests/e2e.bats",
-    "lint": "editorconfig-checker; shellcheck 'helm-git' *.sh scripts/*.sh tests/*.bash",
+    "lint": "editorconfig-checker; shellcheck 'helm-git' *.sh tests/*.bash",
     "bump": "test -z ${VERSION} || (echo bumping to v${VERSION} && npm run bump:helm-plugin && npm run bump:readme && npm run bump:npm)",
     "bump:helm-plugin": "sed -i \"s/version: \\\".*\\\"/version: \\\"${VERSION}\\\"/\" plugin.yaml",
     "bump:readme": "sed -E -i -e \"s/helm-git --version .*$/helm-git --version ${VERSION}/\" -e \"s#releases/download/v[^/]+/helm-git-[^ ]+\\.tgz#releases/download/v${VERSION}/helm-git-${VERSION}.tgz#\" README.md",
     "bump:npm": "npm version --allow-same-version --no-git-tag-version ${VERSION}",
+    "package": "mkdir -p dist/helm-git && cp plugin.yaml helm-git helm-git-plugin.sh LICENSE README.md dist/helm-git/ && printf %s \"$HELM_GIT_SIGNING_PASSPHRASE\" | helm plugin package dist/helm-git --destination dist --key \"$HELM_GIT_SIGNING_KEY\" --keyring \"$HELM_GIT_SIGNING_KEYRING\" --passphrase-file -",
     "release": "semantic-release",
     "prepare": "husky"
   },

@@ -18,7 +18,7 @@ module.exports = {
     [
       "@semantic-release/exec",
       {
-        prepareCmd: "VERSION=${nextRelease.version} npm run bump && scripts/package.sh",
+        prepareCmd: "VERSION=${nextRelease.version} npm run bump && npm run package",
       }
     ],
     [

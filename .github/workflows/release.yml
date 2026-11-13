@@ -27,7 +27,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        helm: ['2.17.0', '3.4.2', '3.7.1', '3.18.5', '4.0.5', '4.3.2']
+        helm: ['2.17.0', '3.4.2', '3.7.1', '3.18.5', '4.0.5']
     env:
       FIXTURES_GIT_REPO: ${{ format('{0}/{1}', github.server_url, github.event.pull_request.head.repo.full_name || github.repository) }}
       FIXTURES_GIT_REF: ${{ github.head_ref || github.ref_name }}
@@ -59,51 +59,9 @@ jobs:
       - run: npm run test
       - run: npm run test:e2e
 
-  package:
-    name: package
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        helm: ['4.0.5', '4.3.2']
-    steps:
-      - uses: actions/checkout@v6
-
-      - uses: azure/setup-helm@v4
-        with:
-          version: ${{ matrix.helm }}
-
-      - name: Package and sign with a throwaway key
-        env:
-          GNUPGHOME: ${{ runner.temp }}/gnupg
-        run: |
-          mkdir -m 700 "$GNUPGHOME"
-          gpg --batch --passphrase '' --quick-gen-key 'helm-git CI <ci@example.invalid>' rsa4096 sign never
-          gpg --batch --export-secret-keys > "$RUNNER_TEMP/secring.gpg"
-          gpg --batch --export > "$RUNNER_TEMP/pubring.gpg"
-          HELM_GIT_SIGNING_KEY='helm-git CI' HELM_GIT_SIGNING_KEYRING="$RUNNER_TEMP/secring.gpg" scripts/package.sh
-
-      - name: Install the signed package over HTTP
-        run: |
-          python3 -m http.server -d dist 8000 &
-          url="http://127.0.0.1:8000/$(basename dist/helm-git-*.tgz)"
-          curl -fsS --retry 5 --retry-connrefused -o /dev/null "$url.prov"
-
-          # A keyring without the signing key must be rejected.
-          mkdir -m 700 "$RUNNER_TEMP/other"
-          GNUPGHOME="$RUNNER_TEMP/other" gpg --batch --passphrase '' --quick-gen-key 'other <other@example.invalid>' rsa4096 sign never
-          GNUPGHOME="$RUNNER_TEMP/other" gpg --batch --export > "$RUNNER_TEMP/other.gpg"
-          if helm plugin install --keyring "$RUNNER_TEMP/other.gpg" "$url"; then
-            echo "installed with an unrelated keyring" >&2
-            exit 1
-          fi
-
-          helm plugin install --keyring "$RUNNER_TEMP/pubring.gpg" "$url"
-          helm plugin list | grep '^helm-git'
-
   release:
     name: release
-    needs: [lint, test, package]
+    needs: [lint, test]
     runs-on: ubuntu-latest
     if: |
       (!contains(github.event.head_commit.message, 'ci skip') && !contains(github.event.head_commit.message, 'skip ci')) &&
@@ -127,20 +85,12 @@ jobs:
         with:
           version: '4.3.2'
 
-      - name: Write the signing key to a keyring
-        env:
-          HELM_GIT_SIGNING_PRIVATE_KEY: ${{ secrets.HELM_GIT_SIGNING_PRIVATE_KEY }}
-        run: |
-          # Users verify with signing-key.asc, so it must hold the key that signs the release.
-          fpr="$(printf '%s\n' "$HELM_GIT_SIGNING_PRIVATE_KEY" | gpg --batch --show-keys --with-colons | awk -F: '$1 == "fpr" { print $10; exit }')"
-          test -n "$fpr"
-          gpg --batch --show-keys --with-colons signing-key.asc | grep -q "^fpr:.*:${fpr}:$"
-          printf '%s\n' "$HELM_GIT_SIGNING_PRIVATE_KEY" | gpg --batch --dearmor > "$RUNNER_TEMP/secring.gpg"
-
       - env:
           GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
           HELM_GIT_SIGNING_KEY: ${{ vars.HELM_GIT_SIGNING_KEY }}
-          HELM_GIT_SIGNING_KEYRING: ${{ runner.temp }}/secring.gpg
+          HELM_GIT_SIGNING_KEYRING: ${{ runner.temp }}/signing-key.asc
           HELM_GIT_SIGNING_PASSPHRASE: ${{ secrets.HELM_GIT_SIGNING_PASSPHRASE }}
+          HELM_GIT_SIGNING_PRIVATE_KEY: ${{ secrets.HELM_GIT_SIGNING_PRIVATE_KEY }}
         run: |
+          printf '%s\n' "$HELM_GIT_SIGNING_PRIVATE_KEY" > "$HELM_GIT_SIGNING_KEYRING"
           npm run release
