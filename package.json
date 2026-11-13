@@ -6,10 +6,10 @@
   "scripts": {
     "test": "bats --print-output-on-failure tests/*-*.bats",
     "test:e2e": "bats --print-output-on-failure tests/e2e.bats",
-    "lint": "editorconfig-checker; shellcheck 'helm-git' *.sh tests/*.bash",
+    "lint": "editorconfig-checker; shellcheck 'helm-git' *.sh scripts/*.sh tests/*.bash",
     "bump": "test -z ${VERSION} || (echo bumping to v${VERSION} && npm run bump:helm-plugin && npm run bump:readme && npm run bump:npm)",
     "bump:helm-plugin": "sed -i \"s/version: \\\".*\\\"/version: \\\"${VERSION}\\\"/\" plugin.yaml",
-    "bump:readme": "sed -E -i \"s/helm-git --version .*$/helm-git --version ${VERSION}/\" README.md",
+    "bump:readme": "sed -E -i -e \"s/helm-git --version .*$/helm-git --version ${VERSION}/\" -e \"s#releases/download/v[^/]+/helm-git-[^ ]+\\.tgz#releases/download/v${VERSION}/helm-git-${VERSION}.tgz#\" README.md",
     "bump:npm": "npm version --allow-same-version --no-git-tag-version ${VERSION}",
     "release": "semantic-release",
     "prepare": "husky"

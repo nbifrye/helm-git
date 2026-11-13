@@ -18,7 +18,7 @@ module.exports = {
     [
       "@semantic-release/exec",
       {
-        prepareCmd: "VERSION=${nextRelease.version} npm run bump",
+        prepareCmd: "VERSION=${nextRelease.version} npm run bump && scripts/package.sh",
       }
     ],
     [
@@ -33,7 +33,15 @@ module.exports = {
         message: "chore(release): update versions to ${nextRelease.version} [skip ci]"
       }
     ],
-    "@semantic-release/github",
+    [
+      "@semantic-release/github",
+      {
+        assets: [
+          "dist/helm-git-*.tgz",
+          "dist/helm-git-*.tgz.prov"
+        ]
+      }
+    ],
     [
       "@semantic-release/npm",
       {
